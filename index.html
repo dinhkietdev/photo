@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Thư viện ảnh Google Drive (Responsive)</title>
   <style>
     body {
@@ -22,6 +22,7 @@
       justify-content: center;
       gap: 15px;
       margin-top: 20px;
+      position: relative;
     }
     .gallery img {
       width: 160px;
@@ -30,9 +31,28 @@
       box-shadow: 0 2px 10px rgba(0,0,0,0.15);
       cursor: pointer;
       transition: transform 0.2s;
+      position: relative;
     }
     .gallery img:hover {
       transform: scale(1.05);
+    }
+    /* Hiển thị ảnh đã tải */
+    .gallery img.downloaded {
+      outline: 3px solid #4CAF50;
+    }
+    .gallery img.downloaded::after {
+      content: '✓';
+      position: absolute;
+      top: 5px;
+      right: 8px;
+      background: #4CAF50;
+      color: white;
+      border-radius: 50%;
+      padding: 2px 6px;
+      font-weight: bold;
+      font-size: 14px;
+      pointer-events: none;
+      user-select: none;
     }
 
     /* Lightbox */
@@ -152,6 +172,21 @@
     let images = [];
     let currentIndex = 0;
 
+    // Lưu ảnh đã tải vào localStorage
+    function markImageAsDownloaded(id) {
+      let downloaded = JSON.parse(localStorage.getItem('downloadedImages') || '[]');
+      if (!downloaded.includes(id)) {
+        downloaded.push(id);
+        localStorage.setItem('downloadedImages', JSON.stringify(downloaded));
+      }
+    }
+
+    // Kiểm tra ảnh đã tải chưa
+    function isImageDownloaded(id) {
+      let downloaded = JSON.parse(localStorage.getItem('downloadedImages') || '[]');
+      return downloaded.includes(id);
+    }
+
     async function listImages() {
       const url = `https://www.googleapis.com/drive/v3/files?q='${FOLDER_ID}'+in+parents+and+mimeType+contains+'image/'&key=${API_KEY}&fields=files(id,name)`;
       const res = await fetch(url);
@@ -168,11 +203,19 @@
         url: `https://lh3.googleusercontent.com/d/${file.id}=w1000`
       }));
 
+      gallery.innerHTML = ''; // Xóa nếu có nội dung cũ
+
       images.forEach((imgObj, i) => {
         const img = document.createElement('img');
         img.src = imgObj.url;
         img.alt = imgObj.name;
         img.tabIndex = 0;
+
+        // Nếu đã tải thì đánh dấu class
+        if (isImageDownloaded(imgObj.id)) {
+          img.classList.add('downloaded');
+        }
+
         img.addEventListener('click', () => openLightbox(i));
         img.addEventListener('keypress', (e) => {
           if (e.key === 'Enter' || e.key === ' ') openLightbox(i);
@@ -199,47 +242,5 @@
       lightboxImg.src = imgObj.url;
       lightboxImg.alt = imgObj.name;
 
-      // Tải ảnh
       downloadBtn.onclick = () => {
-        const downloadUrl = `https://drive.google.com/uc?export=download&id=${imgObj.id}`;
-        const a = document.createElement('a');
-        a.href = downloadUrl;
-        a.download = imgObj.name;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-      };
-    }
-
-    function prevImage() {
-      currentIndex = (currentIndex - 1 + images.length) % images.length;
-      updateLightbox();
-    }
-
-    function nextImage() {
-      currentIndex = (currentIndex + 1) % images.length;
-      updateLightbox();
-    }
-
-    closeBtn.addEventListener('click', closeLightbox);
-    prevBtn.addEventListener('click', prevImage);
-    nextBtn.addEventListener('click', nextImage);
-
-    lightbox.addEventListener('click', (e) => {
-      if (e.target === lightbox) {
-        closeLightbox();
-      }
-    });
-
-    document.addEventListener('keydown', (e) => {
-      if (lightbox.style.display === 'flex') {
-        if (e.key === 'Escape') closeLightbox();
-        else if (e.key === 'ArrowLeft') prevImage();
-        else if (e.key === 'ArrowRight') nextImage();
-      }
-    });
-
-    listImages();
-  </script>
-</body>
-</html>
+        const downloadUrl
