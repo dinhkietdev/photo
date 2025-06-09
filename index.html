@@ -153,32 +153,46 @@
     let currentIndex = 0;
 
     async function listImages() {
-      const url = `https://www.googleapis.com/drive/v3/files?q='${FOLDER_ID}'+in+parents+and+mimeType+contains+'image/'&key=${API_KEY}&fields=files(id,name)`;
-      const res = await fetch(url);
-      const data = await res.json();
+      const query = `'${FOLDER_ID}' in parents and mimeType contains 'image/'`;
+      const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&key=${API_KEY}&fields=files(id,name)`;
 
-      if (!data.files || data.files.length === 0) {
-        gallery.innerHTML = '<p>Không tìm thấy ảnh nào.</p>';
-        return;
-      }
+      try {
+        const res = await fetch(url);
+        if (!res.ok) {
+          gallery.innerHTML = `<p>Lỗi tải ảnh: ${res.status} ${res.statusText}</p>`;
+          return;
+        }
 
-      images = data.files.map(file => ({
-        id: file.id,
-        name: file.name,
-        url: `https://lh3.googleusercontent.com/d/${file.id}=w1000`
-      }));
+        const data = await res.json();
 
-      images.forEach((imgObj, i) => {
-        const img = document.createElement('img');
-        img.src = imgObj.url;
-        img.alt = imgObj.name;
-        img.tabIndex = 0;
-        img.addEventListener('click', () => openLightbox(i));
-        img.addEventListener('keypress', (e) => {
-          if (e.key === 'Enter' || e.key === ' ') openLightbox(i);
+        if (!data.files || data.files.length === 0) {
+          gallery.innerHTML = '<p>Không tìm thấy ảnh nào.</p>';
+          return;
+        }
+
+        images = data.files.map(file => ({
+          id: file.id,
+          name: file.name,
+          url: `https://lh3.googleusercontent.com/d/${file.id}=w1000`
+        }));
+
+        gallery.innerHTML = ''; // Xóa gallery cũ trước khi thêm ảnh mới
+
+        images.forEach((imgObj, i) => {
+          const img = document.createElement('img');
+          img.src = imgObj.url;
+          img.alt = imgObj.name;
+          img.tabIndex = 0;
+          img.addEventListener('click', () => openLightbox(i));
+          img.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') openLightbox(i);
+          });
+          gallery.appendChild(img);
         });
-        gallery.appendChild(img);
-      });
+      } catch (error) {
+        gallery.innerHTML = `<p>Lỗi kết nối hoặc phân tích dữ liệu.</p>`;
+        console.error(error);
+      }
     }
 
     function openLightbox(index) {
@@ -199,7 +213,6 @@
       lightboxImg.src = imgObj.url;
       lightboxImg.alt = imgObj.name;
 
-      // Tải ảnh
       downloadBtn.onclick = () => {
         const downloadUrl = `https://drive.google.com/uc?export=download&id=${imgObj.id}`;
         const a = document.createElement('a');
@@ -226,9 +239,7 @@
     nextBtn.addEventListener('click', nextImage);
 
     lightbox.addEventListener('click', (e) => {
-      if (e.target === lightbox) {
-        closeLightbox();
-      }
+      if (e.target === lightbox) closeLightbox();
     });
 
     document.addEventListener('keydown', (e) => {
@@ -239,6 +250,7 @@
       }
     });
 
+    // Khởi chạy tải ảnh khi mở trang
     listImages();
   </script>
 </body>
