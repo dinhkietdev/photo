@@ -243,4 +243,50 @@
       lightboxImg.alt = imgObj.name;
 
       downloadBtn.onclick = () => {
-        const downloadUrl
+        const downloadUrl = `https://drive.google.com/uc?export=download&id=${imgObj.id}`;
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = imgObj.name;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+        // Lưu trạng thái đã tải ảnh
+        markImageAsDownloaded(imgObj.id);
+        // Cập nhật class ảnh trong gallery
+        gallery.children[currentIndex].classList.add('downloaded');
+      };
+    }
+
+    function prevImage() {
+      currentIndex = (currentIndex - 1 + images.length) % images.length;
+      updateLightbox();
+    }
+
+    function nextImage() {
+      currentIndex = (currentIndex + 1) % images.length;
+      updateLightbox();
+    }
+
+    closeBtn.addEventListener('click', closeLightbox);
+    prevBtn.addEventListener('click', prevImage);
+    nextBtn.addEventListener('click', nextImage);
+
+    lightbox.addEventListener('click', (e) => {
+      if (e.target === lightbox) {
+        closeLightbox();
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (lightbox.style.display === 'flex') {
+        if (e.key === 'Escape') closeLightbox();
+        else if (e.key === 'ArrowLeft') prevImage();
+        else if (e.key === 'ArrowRight') nextImage();
+      }
+    });
+
+    listImages();
+  </script>
+</body>
+</html>
