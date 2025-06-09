@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Thư viện ảnh Google Drive (Responsive)</title>
+  <title>Thư viện ảnh Google Drive</title>
   <style>
     body {
       font-family: sans-serif;
@@ -35,7 +35,6 @@
       transform: scale(1.05);
     }
 
-    /* Lightbox */
     #lightbox {
       position: fixed;
       top: 0; left: 0;
@@ -63,7 +62,8 @@
       gap: 15px;
       flex-wrap: wrap;
     }
-    #lightbox button {
+    #lightbox button,
+    #lightbox a {
       background: transparent;
       border: none;
       cursor: pointer;
@@ -75,16 +75,17 @@
       justify-content: center;
       width: 44px;
       height: 44px;
+      text-decoration: none;
     }
-    #lightbox button:hover {
+    #lightbox button:hover,
+    #lightbox a:hover {
       background: rgba(255, 255, 255, 0.2);
     }
-    #lightbox button svg {
+    #lightbox button svg,
+    #lightbox a svg {
       width: 24px;
       height: 24px;
     }
-
-    /* Icon color */
     #prev-btn svg, #next-btn svg, #download-btn svg {
       fill: white;
     }
@@ -96,7 +97,6 @@
       fill: none;
     }
 
-    /* Responsive adjustments */
     @media (max-width: 480px) {
       .gallery img {
         width: 45vw;
@@ -126,11 +126,11 @@
       <button id="close-btn" aria-label="Đóng lightbox" title="Đóng">
         <svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </button>
-      <button id="download-btn" aria-label="Tải ảnh" title="Tải ảnh">
+      <a id="download-btn" aria-label="Tải ảnh" title="Tải ảnh" download target="_blank">
         <svg viewBox="0 0 24 24">
           <path fill="white" d="M5 20h14v-2H5v2zm7-6l5-5h-3V4h-4v5H7l5 5z"/>
         </svg>
-      </button>
+      </a>
       <button id="next-btn" aria-label="Ảnh kế" title="Ảnh kế">
         <svg viewBox="0 0 24 24"><path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/></svg>
       </button>
@@ -199,16 +199,10 @@
       lightboxImg.src = imgObj.url;
       lightboxImg.alt = imgObj.name;
 
-      // Tải ảnh
-      downloadBtn.onclick = () => {
-        const downloadUrl = `https://drive.google.com/uc?export=download&id=${imgObj.id}`;
-        const a = document.createElement('a');
-        a.href = downloadUrl;
-        a.download = imgObj.name;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-      };
+      // Cập nhật liên kết tải về (hoạt động tốt trên mobile)
+      const downloadUrl = `https://drive.google.com/uc?export=download&id=${imgObj.id}`;
+      downloadBtn.setAttribute('href', downloadUrl);
+      downloadBtn.setAttribute('download', imgObj.name);
     }
 
     function prevImage() {
@@ -226,9 +220,7 @@
     nextBtn.addEventListener('click', nextImage);
 
     lightbox.addEventListener('click', (e) => {
-      if (e.target === lightbox) {
-        closeLightbox();
-      }
+      if (e.target === lightbox) closeLightbox();
     });
 
     document.addEventListener('keydown', (e) => {
