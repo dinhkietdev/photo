@@ -1,257 +1,148 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Thư viện ảnh Google Drive (Responsive)</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Album Ảnh Demo</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/css/lightbox.min.css" integrity="sha512-q+4bqsnHOEAT4Z9aWx+CGDOL+pL9T4Ih5Qsvms6mc6m3aapOHzOugm0OXhB+dc3PjPKpWxuMSxQZwVl6z+vMCg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <style>
     body {
-      font-family: sans-serif;
-      background: #f0f0f0;
-      padding: 20px;
-      text-align: center;
       margin: 0;
-    }
-    h1 {
+      font-family: Arial, sans-serif;
+      background: #fef7f0;
       color: #333;
-      font-size: 1.5em;
+    }
+    header {
+      padding: 20px;
+      background: #fff3c0;
+      border-bottom: 1px solid #ccc;
+      text-align: center;
+    }
+    .controls {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 20px;
+      background: #fff;
+    }
+    .controls button {
+      padding: 10px 15px;
+      border: none;
+      border-radius: 5px;
+      background: #2f855a;
+      color: white;
+      cursor: pointer;
+    }
+    .controls button:hover {
+      background: #276749;
     }
     .gallery {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
       gap: 15px;
-      margin-top: 20px;
+      padding: 20px;
+    }
+    .gallery a {
+      position: relative;
+      display: block;
     }
     .gallery img {
-      width: 160px;
-      height: auto;
+      width: 100%;
       border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.15);
-      cursor: pointer;
-      transition: transform 0.2s;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
-    .gallery img:hover {
-      transform: scale(1.05);
-    }
-
-    /* Lightbox */
-    #lightbox {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(0,0,0,0.9);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 9999;
+    .gallery .icons {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      display: flex;
       flex-direction: column;
-      padding: 10px;
+      gap: 5px;
     }
-    #lightbox img {
-      max-width: 100%;
-      max-height: 70vh;
-      border-radius: 10px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.7);
-      user-select: none;
-    }
-    #lightbox .controls {
-      margin-top: 15px;
-      display: flex;
-      justify-content: center;
-      gap: 15px;
-      flex-wrap: wrap;
-    }
-    #lightbox button {
-      background: transparent;
+    .gallery .icons button {
+      background: rgba(255, 255, 255, 0.8);
       border: none;
-      cursor: pointer;
-      padding: 10px;
       border-radius: 50%;
-      transition: background 0.3s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 44px;
-      height: 44px;
-    }
-    #lightbox button:hover {
-      background: rgba(255, 255, 255, 0.2);
-    }
-    #lightbox button svg {
-      width: 24px;
-      height: 24px;
-    }
-
-    /* Icon color */
-    #prev-btn svg, #next-btn svg, #download-btn svg {
-      fill: white;
-    }
-    #close-btn svg path {
-      stroke: white;
-      stroke-width: 2;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      fill: none;
-    }
-
-    /* Responsive adjustments */
-    @media (max-width: 480px) {
-      .gallery img {
-        width: 45vw;
-      }
-      h1 {
-        font-size: 1.2em;
-      }
-      #lightbox img {
-        max-height: 60vh;
-      }
-      #lightbox .controls {
-        gap: 10px;
-      }
+      width: 32px;
+      height: 32px;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
-  <h1>Thư viện ảnh Google Drive</h1>
-  <div class="gallery" id="gallery"></div>
+  <header>
+    <h1>Album ảnh: Lễ Thành Hôn</h1>
+    <p>Album có <strong>322</strong> ảnh | Ảnh đã chọn: <span id="selectedCount">0</span></p>
+  </header>
 
-  <div id="lightbox" aria-modal="true" role="dialog" tabindex="-1">
-    <img id="lightbox-img" src="" alt="Ảnh lớn" />
-    <div class="controls">
-      <button id="prev-btn" aria-label="Ảnh trước" title="Ảnh trước">
-        <svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
-      </button>
-      <button id="close-btn" aria-label="Đóng lightbox" title="Đóng">
-        <svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
-      </button>
-      <button id="download-btn" aria-label="Tải ảnh" title="Tải ảnh">
-        <svg viewBox="0 0 24 24">
-          <path fill="white" d="M5 20h14v-2H5v2zm7-6l5-5h-3V4h-4v5H7l5 5z"/>
-        </svg>
-      </button>
-      <button id="next-btn" aria-label="Ảnh kế" title="Ảnh kế">
-        <svg viewBox="0 0 24 24"><path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/></svg>
-      </button>
-    </div>
+  <div class="controls">
+    <button onclick="downloadSelected()">Tải về</button>
+    <button onclick="filterFavorites()">Lọc ảnh yêu thích</button>
+    <button onclick="copyImageNames()">Copy tên ảnh</button>
   </div>
 
+  <div class="gallery" id="gallery">
+    <a href="https://via.placeholder.com/1200x800?text=Ảnh+1" data-lightbox="album" data-title="Ảnh 1">
+      <img src="https://via.placeholder.com/400x300?text=Ảnh+1" alt="Ảnh 1">
+      <div class="icons">
+        <button onclick="toggleSelect(event, this)">✔️</button>
+        <button onclick="toggleFavorite(this)">❤️</button>
+      </div>
+    </a>
+    <a href="https://via.placeholder.com/1200x800?text=Ảnh+2" data-lightbox="album" data-title="Ảnh 2">
+      <img src="https://via.placeholder.com/400x300?text=Ảnh+2" alt="Ảnh 2">
+      <div class="icons">
+        <button onclick="toggleSelect(event, this)">✔️</button>
+        <button onclick="toggleFavorite(this)">❤️</button>
+      </div>
+    </a>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/js/lightbox.min.js" integrity="sha512-RZ2kSBFVZ+spkbr7skf2+XUQIH9M7X06ck6zH6AS1yO+a6N1uYZzVGSLPLdKw1AyEUSDPZpZzUyZJbR51ay1KQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script>
-    const API_KEY = 'AIzaSyBeXaKep1YahbOfQEI7v7iaYOk30Ls2gWA';
-    const FOLDER_ID = '1DTpucd2TwL0ar5KT_DpaojiUuiiudIbj';
-
-    const gallery = document.getElementById('gallery');
-    const lightbox = document.getElementById('lightbox');
-    const lightboxImg = document.getElementById('lightbox-img');
-    const prevBtn = document.getElementById('prev-btn');
-    const nextBtn = document.getElementById('next-btn');
-    const closeBtn = document.getElementById('close-btn');
-    const downloadBtn = document.getElementById('download-btn');
-
-    let images = [];
-    let currentIndex = 0;
-
-    async function listImages() {
-      const query = `'${FOLDER_ID}' in parents and mimeType contains 'image/'`;
-      const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&key=${API_KEY}&fields=files(id,name)`;
-
-      try {
-        const res = await fetch(url);
-        if (!res.ok) {
-          gallery.innerHTML = `<p>Lỗi tải ảnh: ${res.status} ${res.statusText}</p>`;
-          return;
-        }
-
-        const data = await res.json();
-
-        if (!data.files || data.files.length === 0) {
-          gallery.innerHTML = '<p>Không tìm thấy ảnh nào.</p>';
-          return;
-        }
-
-        images = data.files.map(file => ({
-          id: file.id,
-          name: file.name,
-          url: `https://lh3.googleusercontent.com/d/${file.id}=w1000`
-        }));
-
-        gallery.innerHTML = ''; // Xóa gallery cũ trước khi thêm ảnh mới
-
-        images.forEach((imgObj, i) => {
-          const img = document.createElement('img');
-          img.src = imgObj.url;
-          img.alt = imgObj.name;
-          img.tabIndex = 0;
-          img.addEventListener('click', () => openLightbox(i));
-          img.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') openLightbox(i);
-          });
-          gallery.appendChild(img);
-        });
-      } catch (error) {
-        gallery.innerHTML = `<p>Lỗi kết nối hoặc phân tích dữ liệu.</p>`;
-        console.error(error);
-      }
-    }
-
-    function openLightbox(index) {
-      currentIndex = index;
-      updateLightbox();
-      lightbox.style.display = 'flex';
-      lightbox.focus();
-      document.body.style.overflow = 'hidden';
-    }
-
-    function closeLightbox() {
-      lightbox.style.display = 'none';
-      document.body.style.overflow = '';
-    }
-
-    function updateLightbox() {
-      const imgObj = images[currentIndex];
-      lightboxImg.src = imgObj.url;
-      lightboxImg.alt = imgObj.name;
-
-      downloadBtn.onclick = () => {
-        const downloadUrl = `https://drive.google.com/uc?export=download&id=${imgObj.id}`;
-        const a = document.createElement('a');
-        a.href = downloadUrl;
-        a.download = imgObj.name;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-      };
-    }
-
-    function prevImage() {
-      currentIndex = (currentIndex - 1 + images.length) % images.length;
-      updateLightbox();
-    }
-
-    function nextImage() {
-      currentIndex = (currentIndex + 1) % images.length;
-      updateLightbox();
-    }
-
-    closeBtn.addEventListener('click', closeLightbox);
-    prevBtn.addEventListener('click', prevImage);
-    nextBtn.addEventListener('click', nextImage);
-
-    lightbox.addEventListener('click', (e) => {
-      if (e.target === lightbox) closeLightbox();
-    });
-
-    document.addEventListener('keydown', (e) => {
-      if (lightbox.style.display === 'flex') {
-        if (e.key === 'Escape') closeLightbox();
-        else if (e.key === 'ArrowLeft') prevImage();
-        else if (e.key === 'ArrowRight') nextImage();
+    document.addEventListener('DOMContentLoaded', () => {
+      if (typeof lightbox !== 'undefined' && lightbox.option) {
+        lightbox.option({ resizeDuration: 200, wrapAround: true });
       }
     });
 
-    // Khởi chạy tải ảnh khi mở trang
-    listImages();
+    let selectedImages = [];
+
+    function toggleSelect(event, button) {
+      event.preventDefault();
+      const anchor = button.closest('a');
+      const url = anchor.href;
+      const index = selectedImages.indexOf(url);
+      if (index === -1) {
+        selectedImages.push(url);
+        button.style.background = '#38a169';
+      } else {
+        selectedImages.splice(index, 1);
+        button.style.background = 'white';
+      }
+      document.getElementById('selectedCount').textContent = selectedImages.length;
+    }
+
+    function toggleFavorite(button) {
+      const active = button.classList.toggle('active');
+      button.textContent = active ? '💖' : '❤️';
+    }
+
+    function downloadSelected() {
+      if (selectedImages.length === 0) return alert('Chưa chọn ảnh nào!');
+      selectedImages.forEach(url => window.open(url, '_blank'));
+    }
+
+    function copyImageNames() {
+      const names = selectedImages.map(url => url.split('/').pop());
+      navigator.clipboard.writeText(names.join('\n'));
+      alert('Đã copy tên ảnh!');
+    }
+
+    function filterFavorites() {
+      alert('Chức năng lọc ảnh yêu thích đang được phát triển.');
+    }
   </script>
 </body>
 </html>
