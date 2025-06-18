@@ -18,6 +18,27 @@
       border-bottom: 1px solid #ccc;
       text-align: center;
     }
+    .input-drive {
+      display: flex;
+      justify-content: center;
+      padding: 20px;
+      gap: 10px;
+    }
+    .input-drive input {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      width: 400px;
+      max-width: 90%;
+    }
+    .input-drive button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      background: #007bff;
+      color: white;
+      cursor: pointer;
+    }
     .controls {
       display: flex;
       justify-content: center;
@@ -72,9 +93,14 @@
 </head>
 <body>
   <header>
-    <h1>Album ảnh: Lễ Thành Hôn</h1>
-    <p>Album có <strong>322</strong> ảnh | Ảnh đã chọn: <span id="selectedCount">0</span></p>
+    <h1>Album ảnh từ Google Drive</h1>
+    <p>Chọn thư mục Google Drive để xem ảnh | Ảnh đã chọn: <span id="selectedCount">0</span></p>
   </header>
+
+  <div class="input-drive">
+    <input type="text" id="driveUrl" placeholder="Dán link thư mục Google Drive vào đây...">
+    <button onclick="loadDriveImages()">Tải ảnh</button>
+  </div>
 
   <div class="controls">
     <button onclick="downloadSelected()">Tải về</button>
@@ -82,22 +108,7 @@
     <button onclick="copyImageNames()">Copy tên ảnh</button>
   </div>
 
-  <div class="gallery" id="gallery">
-    <a href="https://via.placeholder.com/1200x800?text=Ảnh+1" data-lightbox="album" data-title="Ảnh 1">
-      <img src="https://via.placeholder.com/400x300?text=Ảnh+1" alt="Ảnh 1">
-      <div class="icons">
-        <button onclick="toggleSelect(event, this)">✔️</button>
-        <button onclick="toggleFavorite(this)">❤️</button>
-      </div>
-    </a>
-    <a href="https://via.placeholder.com/1200x800?text=Ảnh+2" data-lightbox="album" data-title="Ảnh 2">
-      <img src="https://via.placeholder.com/400x300?text=Ảnh+2" alt="Ảnh 2">
-      <div class="icons">
-        <button onclick="toggleSelect(event, this)">✔️</button>
-        <button onclick="toggleFavorite(this)">❤️</button>
-      </div>
-    </a>
-  </div>
+  <div class="gallery" id="gallery"></div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/js/lightbox.min.js" integrity="sha512-RZ2kSBFVZ+spkbr7skf2+XUQIH9M7X06ck6zH6AS1yO+a6N1uYZzVGSLPLdKw1AyEUSDPZpZzUyZJbR51ay1KQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script>
@@ -108,6 +119,7 @@
     });
 
     let selectedImages = [];
+    const API_KEY = "AIzaSyALgZGmV-qtF5TmsHlY8pSN3TBPfrN4DhI";
 
     function toggleSelect(event, button) {
       event.preventDefault();
@@ -142,6 +154,48 @@
 
     function filterFavorites() {
       alert('Chức năng lọc ảnh yêu thích đang được phát triển.');
+    }
+
+    function extractFolderId(url) {
+      const match = url.match(/\/folders\/([a-zA-Z0-9_-]+)/);
+      return match ? match[1] : null;
+    }
+
+    async function loadDriveImages() {
+      const input = document.getElementById('driveUrl').value.trim();
+      const folderId = extractFolderId(input);
+      const gallery = document.getElementById('gallery');
+      gallery.innerHTML = '';
+
+      if (!folderId) return alert('Không tìm thấy Folder ID trong đường dẫn.');
+
+      const url = `https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents+and+mimeType+contains+'image/'&key=${API_KEY}&fields=files(id,name)`;
+
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        if (!data.files || data.files.length === 0) {
+          return alert('Không tìm thấy ảnh nào trong thư mục.');
+        }
+
+        data.files.forEach(file => {
+          const imgUrl = `https://drive.google.com/uc?id=${file.id}`;
+          const a = document.createElement('a');
+          a.href = imgUrl;
+          a.setAttribute('data-lightbox', 'album');
+          a.setAttribute('data-title', file.name);
+          a.innerHTML = `
+            <img src="${imgUrl}" alt="${file.name}">
+            <div class="icons">
+              <button onclick="toggleSelect(event, this)">✔️</button>
+              <button onclick="toggleFavorite(this)">❤️</button>
+            </div>`;
+          gallery.appendChild(a);
+        });
+      } catch (error) {
+        alert('Lỗi khi tải ảnh từ Google Drive.');
+        console.error(error);
+      }
     }
   </script>
 </body>
